@@ -11,6 +11,7 @@ def show_image(img):
 
 def draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels):
     # If there are any detections
+    texts=[]
     if len(idxs) > 0:
         for i in idxs.flatten():
             # Get the bounding box coordinates
@@ -24,8 +25,8 @@ def draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, label
             cv.rectangle(img, (x, y), (x+w, y+h), color, 2)
             text = "{}: {:4f}".format(labels[classids[i]], confidences[i])
             cv.putText(img, text, (x, y-5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-    return img
+            texts.append(text)
+    return img, texts
 
 
 def generate_boxes_confidences_classids(outs, height, width, tconf):
@@ -76,21 +77,20 @@ def infer_image(net, layer_names, height, width, img, colors, labels, FLAGS,
         start = time.time()
         outs = net.forward(layer_names)
         end = time.time()
-
-        if FLAGS.show_time:
-            print ("[INFO] YOLOv3 took {:6f} seconds".format(end - start))
-
+        FLAGS['confidence']=0.5
+        FLAGS['threshold']= 0.3
+         
         
         # Generate the boxes, confidences, and classIDs
-        boxes, confidences, classids = generate_boxes_confidences_classids(outs, height, width, FLAGS.confidence)
+        boxes, confidences, classids = generate_boxes_confidences_classids(outs, height, width, FLAGS['confidence'])
         
         # Apply Non-Maxima Suppression to suppress overlapping bounding boxes
-        idxs = cv.dnn.NMSBoxes(boxes, confidences, FLAGS.confidence, FLAGS.threshold)
+        idxs = cv.dnn.NMSBoxes(boxes, confidences, FLAGS['confidence'], FLAGS['threshold'])
 
     if boxes is None or confidences is None or idxs is None or classids is None:
         raise '[ERROR] Required variables are set to None before drawing boxes on images.'
         
     # Draw labels and boxes on the image
-    img = draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels)
+    img, text = draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels)
 
-    return img, boxes, confidences, classids, idxs
+    return img, boxes, confidences, classids, idxs, text

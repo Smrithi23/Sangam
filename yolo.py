@@ -90,7 +90,7 @@ if __name__ == '__main__':
 	# Get the output layer names of the model
 	layer_names = net.getLayerNames()
 	layer_names = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-        
+    
 	# If both image and video files are given then raise error
 	if FLAGS.image_path is None and FLAGS.video_path is None:
 	    print ('Neither path to an image or path to video provided')
